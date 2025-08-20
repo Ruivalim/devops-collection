@@ -1,0 +1,13 @@
+controller:
+  allowSnippetAnnotations: true
+  config:
+    proxy-read-timeout: 180
+    proxy-send-timeout: 180
+    proxy-connect-timeout: 15
+    grpc_read_timeout: 180s
+    grpc_send_timeout: 180s
+    client_body_timeout: 180s
+  service:
+    loadBalancerIP: 0.0.0.0
+    annotations:
+      service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: '/healthz'

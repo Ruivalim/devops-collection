@@ -1,0 +1,68 @@
+# Chart dependencies
+**/charts/*.tgz
+
+# Backup files created by sanitization script
+*.bak
+
+# Temporary files
+*.tmp
+*~
+.DS_Store
+Thumbs.db
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment-specific files (if any)
+.env
+.env.local
+.env.*.local
+
+# Terraform state files (if using Terraform)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Helm package files
+*.tgz
+
+# ArgoCD CLI config (if stored locally)
+.argocd/
+
+# Local development overrides
+local/
+*.local.yaml
+*.local.yml
+
+# Test output
+test-results/
+coverage/
+
+# Build artifacts
+dist/
+build/
+
+# Secrets that shouldn't be committed
+secrets/
+*.key
+*.pem
+*.crt
+*.p12
+*.jks

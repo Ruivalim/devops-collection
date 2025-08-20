@@ -1,0 +1,18 @@
+dependencies:
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 62.3.1
+- name: tempo-distributed
+  repository: https://grafana.github.io/helm-charts/
+  version: 1.20.0
+- name: loki
+  repository: https://grafana.github.io/helm-charts/
+  version: 6.16.0
+- name: promtail
+  repository: https://grafana.github.io/helm-charts/
+  version: 6.16.0
+- name: prometheus-blackbox-exporter
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 9.0.0
+digest: sha256:e6e1e20620a31c750fa98fc519221a690a881fd1b17aa05863119b0439728218
+generated: "2024-10-31T22:43:19.712494-03:00"

@@ -1,0 +1,25 @@
+global:
+  customerId: 'customerId'
+  activationId: 'activationId'
+  gatewayUrl: 'https://gateway.qg3.apps.qualys.com'
+  cmsqagPublicUrl: 'https://cmsqagpublic.qg3.apps.qualys.com/ContainerSensor'
+  clusterInfoArgs:
+    cloudProvider: 'AZURE'
+    AZURE:
+      id: '/subscriptions/abc/resourceGroups/rg-container-bse/providers/Microsoft.ContainerService/managedClusters/example-cluster-center'
+      region: 'brazilsouth'
+
+clusterSensor:
+  enabled: true
+
+qcsSensor:
+  enabled: true
+  qualys:
+    args:
+      enableConsoleLogs: true
+
+admissionController:
+  enabled: true
+
+runtimeSensor:
+  enabled: true

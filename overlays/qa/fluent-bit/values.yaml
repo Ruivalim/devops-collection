@@ -1,0 +1,128 @@
+config:
+  inputs: |
+    [INPUT]
+        Name tail
+        Path /var/log/containers/*.log
+        Exclude_Path      /var/log/containers/*_monitoring_*.log,/var/log/containers/*_observability_*.log
+        multiline.parser docker, cri
+        Tag kube.*
+        Mem_Buf_Limit 5MB
+        Skip_Long_Lines On
+
+    [INPUT]
+        Name tail
+        Path /var/log/containers/*.log
+        multiline.parser docker, cri
+        Exclude_Path      /var/log/containers/*_akv2k8s_*.log,/var/log/containers/*_cert-manager_*.log,/var/log/containers/*_default_*.log,/var/log/containers/*_kube-node-lease_*.log,/var/log/containers/*_kube-public_*.log,/var/log/containers/*_kube-system_*.log,/var/log/containers/*_monitoring_*.log,/var/log/containers/*_nginx-system_*.log,/var/log/containers/*_observability_*.log,/var/log/containers/*_qualys_*.log,/var/log/containers/*_reloader_*.log
+        Tag everything.*
+        Mem_Buf_Limit 5MB
+        Skip_Long_Lines On
+
+    [INPUT]
+        Name tail
+        Path /var/log/containers/*.log
+        multiline.parser docker, cri
+        Exclude_Path      /var/log/containers/*_akv2k8s_*.log,/var/log/containers/*_cert-manager_*.log,/var/log/containers/*_default_*.log,/var/log/containers/*_kube-node-lease_*.log,/var/log/containers/*_kube-public_*.log,/var/log/containers/*_kube-system_*.log,/var/log/containers/*_monitoring_*.log,/var/log/containers/*_nginx-system_*.log,/var/log/containers/*_observability_*.log,/var/log/containers/*_qualys_*.log,/var/log/containers/*_reloader_*.log
+        Tag audit.*
+        Mem_Buf_Limit 5MB
+        Skip_Long_Lines On
+
+  filters: |
+    [FILTER]
+        Name kubernetes
+        Match *
+        Merge_Log On
+        Keep_Log Off
+        K8S-Logging.Parser On
+        K8S-Logging.Exclude On
+
+    [FILTER]
+        name   grep
+        match  audit.*
+        regex  log "type":"audit"
+
+    [FILTER]
+        name   grep
+        match  kube.*
+        Exclude  log "type":"audit"
+
+    [FILTER]
+        Name                grep
+        Match               kube.*
+        Exclude             log     ^\u001b
+
+    [FILTER]
+        Name                modify
+        Match               kube.*
+        Remove              stream
+        Remove              _p
+
+    [FILTER]
+        Name                rewrite_tag
+        Match               kube.*
+        Rule                $log ^(.*)$ cleaned.$TAG true
+
+    [FILTER]
+        Name                record_modifier
+        Match               cleaned.*
+
+    [FILTER]
+        Name                lua
+        Match               cleaned.*
+        Script              /fluent-bit/scripts/remove_ansi.lua
+        Call                remove_ansi
+
+  outputs: |
+    [OUTPUT]
+        name                 syslog
+        Match                audit.*
+        host                 10.0.0.5
+        port                 514
+        mode                 udp
+        syslog_format        rfc5424
+        syslog_message_key   log
+
+    [OUTPUT]
+        name                  azure_blob
+        match                 everything.*
+        account_name          azure_container
+        shared_key            abc-d/efg
+        container_name        your-cluster-name
+        tls                   on
+
+    [OUTPUT]
+        name stdout
+        match everything.*
+        format json_lines
+        json_date_key time
+
+    [OUTPUT]
+        name   loki
+        match cleaned.*
+        host   monitoring-stack-loki-distributor.monitoring.svc.cluster.local
+        port   3100
+        Labels job=$kubernetes['labels']['app'], namespace=$kubernetes['namespace_name'], pod_name=$kubernetes['pod_name'], container_name=$kubernetes['container_name'], app=$kubernetes['labels']['app']
+        auto_kubernetes_labels On
+        remove_keys kubernetes,stream,time,container_id,container_hash,docker_id
+        line_format key_value
+        drop_single_key on
+
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+luaScripts:
+  remove_ansi.lua: |
+    function remove_ansi(tag, timestamp, record)
+        local log = record["log"]
+        if log then
+            -- Remove ANSI escape codes
+            log = string.gsub(log, "\x1b%[[0-9;]*m", "")
+            record["log"] = log
+        end
+        return 1, timestamp, record
+    end

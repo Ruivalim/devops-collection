@@ -1,0 +1,52 @@
+controller:
+  metrics:
+    enabled: true
+global:
+  domain: argocd.central.example-company.com
+server:
+  ingress:
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/force-ssl-redirect: false
+      nginx.ingress.kubernetes.io/ssl-passthrough: false
+      nginx.ingress.kubernetes.io/use-regex: true
+    enabled: true
+    hostname: argocd.central.example-company.com
+    ingressClassName: nginx
+    tls: false
+  insecure: true
+  service:
+    type: ClusterIP
+configs:
+  rbac:
+    create: true
+    annotations: {}
+
+    policy.csv: |
+      p, role:dev-qa-role, applications, get, dev/*, allow
+      p, role:dev-qa-role, applications, get, qa/*, allow
+      p, role:dev-qa-role, applications, sync, dev/*, allow
+      p, role:dev-qa-role, applications, sync, qa/*, allow
+
+      p, role:uat-role, applications, get, uat/*, allow
+      p, role:uat-role, applications, get, qa/*, allow
+      p, role:uat-role, applications, get, dev/*, allow
+      p, role:uat-role, applications, sync, uat/*, allow
+      p, role:uat-role, applications, sync, qa/*, allow
+      p, role:uat-role, applications, sync, dev/*, allow
+
+      p, role:prd-role, applications, get, prd/*, allow
+      p, role:prd-role, applications, get, uat/*, allow
+      p, role:prd-role, applications, get, qa/*, allow
+      p, role:prd-role, applications, get, dev/*, allow
+      p, role:prd-role, applications, sync, prd/*, allow
+      p, role:prd-role, applications, sync, uat/*, allow
+      p, role:prd-role, applications, sync, qa/*, allow
+      p, role:prd-role, applications, sync, dev/*, allow
+
+      g, dev-user, role:dev-qa-role
+      g, uat-user, role:uat-role
+      g, prd-user, role:prd-role
+
+    scopes: '[groups]'
+    policy.matchMode: 'glob'

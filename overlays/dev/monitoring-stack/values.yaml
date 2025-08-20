@@ -1,0 +1,126 @@
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      additionalScrapeConfigs:
+        - job_name: "spring"
+          metrics_path: "/actuator/prometheus"
+          static_configs:
+            - targets: ["HOST:PORT"]
+  grafana:
+    grafana.ini:
+      server:
+        root_url: https://grafana.dev.example-company.com.br
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hosts:
+        - grafana.dev.example-company.com.br
+      tls:
+        - secretName: tls-secret
+          hosts:
+            - "*.dev.example-company.com.br"
+
+loki:
+  enabled: true
+  loki:
+    storage:
+      bucketNames:
+        chunks: "your-cluster-name-chunks"
+        ruler: "your-cluster-name-ruler"
+        admin: "your-cluster-name-admin"
+  ingester:
+    replicas: 2
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+  querier:
+    replicas: 1
+    maxUnavailable: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "200m"
+        memory: "512Mi"
+  queryFrontend:
+    replicas: 1
+    maxUnavailable: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+  queryScheduler:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+  distributor:
+    replicas: 1
+    maxUnavailable: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+  compactor:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+  indexGateway:
+    replicas: 1
+    maxUnavailable: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+  bloomCompactor:
+    replicas: 0
+  bloomGateway:
+    replicas: 0
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+  singleBinary:
+    replicas: 0
+
+#tempo-distributed:
+#  ingester:
+#    replicas: 1
+#    resources:
+#      requests:
+#        cpu: "150m"
+#        memory: "256Mi"
+#      limits:
+#        cpu: "250m"
+#        memory: "512Mi"
+
+tempo-distributed:
+  enabled: false
+
+promtail:
+  enabled: false

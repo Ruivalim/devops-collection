@@ -1,0 +1,76 @@
+# wiremock/values.yaml
+
+replicaCount: 1
+
+image:
+  repository: wiremock/wiremock
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: '100m'
+  hosts:
+    - host: wiremock.dev.exemplo.com.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wiremock
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - 'wiremock.dev.example-company.com.br'
+      secretName: tls-secret
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+persistence:
+  enabled: true
+  storageClass: 'default'
+  accessMode: ReadWriteOnce
+  size: 5Gi
+  subPath: ''
+
+#secretsStore:
+#  enabled: true
+#  secretProviderClass: wiremock-secrets
+#  mountPath: /mnt/secrets-store
+#  files:
+#    - name: tls-cert
+#      fileName: tls.crt
+#      mountPath: /mnt/secrets-store/wiremock-tls-cert
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+env:
+  - name: WIREMOCK_OPTIONS
+    value: '--verbose'
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  runAsUser: 1000
+
+tolerations: []

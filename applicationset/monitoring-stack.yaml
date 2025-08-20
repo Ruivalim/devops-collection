@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: monitoring-stack-generator
+  namespace: argo-cd
+spec:
+  goTemplate: true
+  goTemplateOptions: ['missingkey=error']
+  generators:
+    - list:
+        elements:
+          - cluster: example-dev
+            url: https://your-cluster.region.cloudprovider.com:443
+            project: dev
+            namespace: NAMESPACE_OF_DEPLOYMENT
+          - cluster: in-cluster
+            url: https://kubernetes.default.svc
+            project: central
+            namespace: NAMESPACE_OF_DEPLOYMENT
+          - cluster: example-qa
+            url: https://your-cluster.region.cloudprovider.com:443
+            project: qa
+            namespace: NAMESPACE_OF_DEPLOYMENT
+          - cluster: example-prod
+            url: https://your-cluster.region.cloudprovider.com:443
+            project: prod
+            namespace: NAMESPACE_OF_DEPLOYMENT
+      template:
+        spec:
+          project: '{{.project}}'
+  template:
+    metadata:
+      name: 'monitoring-stack-{{.project}}'
+    spec:
+      project: default
+      source:
+        repoURL: git@git.yourcompany.com/PROJECT/helmchart-gitops
+        targetRevision: HEAD
+        path: charts/monitoring-stack
+        helm:
+          valueFiles:
+            - 'values.yaml'
+            - '../../overlays/{{.project}}/monitoring-stack/values.yaml'
+      destination:
+        server: '{{.url}}'
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        syncOptions:
+          - ServerSideApply=true

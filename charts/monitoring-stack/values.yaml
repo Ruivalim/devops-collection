@@ -1,0 +1,145 @@
+kube-prometheus-stack:
+  enabled: true
+  fullnameOverride: 'monitoring-stack-kube-prom'
+  prometheus:
+    prometheusSpec:
+      remoteWrite:
+        - url: http://monitoring-stack-tempo-distributor:3100/api/prom/push
+      serviceMonitorSelectorNilUsesHelmValues: false
+      additionalServiceMonitors:
+        - name: blackbox-exporter
+          endpoints:
+            - port: http
+              interval: 30s
+              path: /probe
+              params:
+                module: [http_2xx]
+              scrapeTimeout: 10s
+              relabelings:
+                - sourceLabels: [__address__]
+                  targetLabel: __param_target
+                - sourceLabels: [__param_target]
+                  targetLabel: instance
+                - targetLabel: __address__
+                  replacement: prometheus-blackbox-exporter:9115
+  prometheus-node-exporter:
+    fullnameOverride: 'monitoring-stack-prometheus-node-exporter'
+  kube-state-metrics:
+    fullnameOverride: 'monitoring-stack-kube-state-metrics'
+  grafana:
+    fullnameOverride: 'monitoring-stack-grafana'
+    assertNoLeakedSecrets: false
+    grafana.ini:
+      auth.generic_oauth:
+        enabled: true
+        name: Microsoft
+        allow_sign_up: true
+        client_id: abcd
+        client_secret: efgh
+        scopes: openid email profile
+        auth_url: https://login.microsoftonline.com/abc-123-456-def/oauth2/v2.0/authorize
+        token_url: https://login.microsoftonline.com/abc-123-456-def/oauth2/v2.0/token
+        api_url: https://graph.microsoft.com/oidc/userinfo
+        role_attribute_path: contains(groups[*], 'GrafanaAdminGroup') && 'Admin' || 'Viewer'
+    additionalDataSources:
+      - name: Loki
+        type: loki
+        url: http://monitoring-stack-loki-query-frontend:3100
+        access: proxy
+      - name: Tempo
+        type: tempo
+        url: http://monitoring-stack-tempo-query-frontend:3100
+        access: proxy
+    persistence:
+      enabled: true
+      size: 20Gi
+
+tempo-distributed:
+  enabled: true
+  fullnameOverride: 'monitoring-stack-tempo'
+
+prometheus-blackbox-exporter:
+  enabled: true
+  fullnameOverride: 'monitoring-stack-prometheus-blackbox-exporter'
+  serviceMonitor:
+    enabled: true
+    additionalRelabelConfigs:
+      - action: replace
+        sourceLabels: [__param_target]
+        targetLabel: instance
+        regex: (.*)
+
+promtail:
+  enabled: true
+  fullnameOverride: 'monitoring-stack-promtail'
+  config:
+    clients:
+      - url: http://monitoring-stack-loki-gateway/loki/api/v1/push
+        tenant_id: 1
+
+loki:
+  enabled: true
+  fullnameOverride: 'monitoring-stack-loki'
+  loki:
+    auth_enabled: false
+    schemaConfig:
+      configs:
+        - from: 2024-04-01
+          store: tsdb
+          object_store: azure
+          schema: v13
+          index:
+            prefix: loki_index_
+            period: 24h
+    ingester:
+      chunk_encoding: snappy
+    tracing:
+      enabled: true
+    querier:
+      max_concurrent: 4
+    storage:
+      type: azure
+      azure:
+        accountName: 'accountName'
+        accountKey: 'abc'
+        connectionString: DefaultEndpointsProtocol=https;AccountName=accountName;AccountKey=abc;EndpointSuffix=core.windows.net
+        useManagedIdentity: false
+        useFederatedToken: false
+        requestTimeout: 60s
+        chunks: 'your-cluster-name-chunks'
+        ruler: 'your-cluster-name-ruler'
+        admin: 'your-cluster-name-admin'
+    limits_config:
+      ingestion_rate_mb: 3
+      ingestion_burst_size_mb: 6
+  deploymentMode: Distributed
+  ingester:
+    replicas: 3
+  querier:
+    replicas: 3
+    maxUnavailable: 2
+  queryFrontend:
+    replicas: 2
+    maxUnavailable: 1
+  queryScheduler:
+    replicas: 2
+  distributor:
+    replicas: 3
+    maxUnavailable: 2
+  compactor:
+    replicas: 1
+  indexGateway:
+    replicas: 2
+    maxUnavailable: 1
+  bloomCompactor:
+    replicas: 0
+  bloomGateway:
+    replicas: 0
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+  singleBinary:
+    replicas: 0

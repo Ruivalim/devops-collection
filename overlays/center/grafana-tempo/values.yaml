@@ -1,0 +1,40 @@
+tempo:
+  repository: grafana/tempo
+  tag: ''
+  pullPolicy: IfNotPresent
+
+  updateStrategy: RollingUpdate
+  # resources:
+  #   requests:
+  #     cpu: 256m
+  #     memory: 256Mi
+  #   limits:
+  #     cpu: 512m
+  #     memory: 512Mi
+
+  storage:
+    trace:
+      backend: azure
+      azure:
+        container_name: 'your-cluster-name' # Nome do container no Blob Storage
+        storage_account_name: 'azure_container' # Nome da Storage Account
+        storage_account_key: 'storage_key' # Chave de acesso da Storage Account
+
+  receivers:
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_binary:
+          endpoint: 0.0.0.0:6832
+        thrift_compact:
+          endpoint: 0.0.0.0:6831
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    opencensus:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318

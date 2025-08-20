@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: reloader-generator
+  namespace: argo-cd
+spec:
+  goTemplate: true
+  goTemplateOptions: ['missingkey=error']
+  generators:
+    - list:
+        elements:
+          - cluster: example-dev
+            url: https://your-cluster.region.cloudprovider.com:443
+            project: dev
+            namespace: NAMESPACE_OF_DEPLOYMENT
+          - cluster: in-cluster
+            url: https://kubernetes.default.svc
+            project: central
+            namespace: NAMESPACE_OF_DEPLOYMENT
+          - cluster: example-qa
+            url: https://your-cluster.region.cloudprovider.com:443
+            project: qa
+            namespace: NAMESPACE_OF_DEPLOYMENT
+          - cluster: example-prod
+            url: https://your-cluster.region.cloudprovider.com:443
+            project: prod
+            namespace: NAMESPACE_OF_DEPLOYMENT
+      template:
+        spec:
+          project: '{{.project}}'
+  template:
+    metadata:
+      name: 'reloader-{{.project}}'
+    spec:
+      project: default
+      sources:
+        - repoURL: https://stakater.github.io/stakater-charts
+          chart: reloader
+          targetRevision: 1.2.1
+      destination:
+        server: '{{.url}}'
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true

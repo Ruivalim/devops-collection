@@ -1,0 +1,55 @@
+# GitOps ApplicationSet Generator Configuration
+# This file contains default configurations for generating ApplicationSets
+
+# Default clusters configuration
+clusters:
+  - name: example-dev
+    url: https://your-cluster.region.cloudprovider.com:443
+    project: dev
+  - name: in-cluster
+    url: https://kubernetes.default.svc
+    project: shared
+  - name: aks-uat
+    url: https://your-cluster.region.cloudprovider.com:443
+    project: uat
+  - name: aks-qa
+    url: https://your-cluster.region.cloudprovider.com:443
+    project: qa
+  - name: aks-prd
+    url: https://your-cluster.region.cloudprovider.com:443
+    project: prd
+
+# Default repository settings
+repository:
+  internal:
+    url: git@git.yourcompany.com:your-org/YOUR-TEAM/helmchart-gitops
+    path_prefix: charts/
+  external:
+    ingress-nginx: https://kubernetes.github.io/ingress-nginx
+    prometheus-community: https://prometheus-community.github.io/helm-charts
+    grafana: https://grafana.github.io/helm-charts
+    jetstack: https://charts.jetstack.io
+    bitnami: https://charts.bitnami.com/bitnami
+
+# Default sync policy (commented out by default)
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+  syncOptions:
+    - CreateNamespace=true
+
+# Environment-specific configurations
+environments:
+  dev:
+    auto_sync: false
+    prune: false
+  uat:
+    auto_sync: false
+    prune: true
+  qa:
+    auto_sync: true
+    prune: true
+  prd:
+    auto_sync: false
+    prune: true

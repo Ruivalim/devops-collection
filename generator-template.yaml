@@ -1,0 +1,72 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: CHART_NAME-generator
+  namespace: argo-cd
+spec:
+  goTemplate: true
+  goTemplateOptions: ['missingkey=error']
+  generators:
+    - list:
+        elements:
+          - cluster: example-dev
+            url: https://your-cluster.region.cloudprovider.com:443
+            project: dev
+            namespace: NAMESPACE_OF_DEPLOYMENT
+          - cluster: in-cluster
+            url: https://kubernetes.default.svc
+            project: central
+            namespace: NAMESPACE_OF_DEPLOYMENT
+          - cluster: example-qa
+            url: https://your-cluster.region.cloudprovider.com:443
+            project: qa
+            namespace: NAMESPACE_OF_DEPLOYMENT
+          - cluster: example-prod
+            url: https://your-cluster.region.cloudprovider.com:443
+            project: prod
+            namespace: NAMESPACE_OF_DEPLOYMENT
+      template:
+        spec:
+          project: '{{.project}}'
+  template:
+    metadata:
+      name: 'CHART_NAME-{{.project}}'
+    spec:
+      project: default
+      ### Configuração para pegar um helm chart proprio
+      source:
+        ## Guardar os charts nesse repo
+        repoURL: git@git.yourcompany.com/PROJECT/helmchart-gitops
+        targetRevision: HEAD
+        ## Caminho dele dentro do repositorio
+        path: charts/CHART_NAME
+        helm:
+          ## Os values
+          valueFiles:
+            ## Values padrão do chart
+            - 'values.yaml'
+            ## Values dos overlays
+            - '../../overlays/{{.project}}/CHART_NAME/values.yaml'
+      ### Configuração para pegar um helm chart externo
+      sources:
+        ## Aqui estamos referenciando esse repo para guardar o values customizado
+        - repoURL: git@git.yourcompany.com/PROJECT/helmchart-gitops
+          ref: values
+        ## Aqui o repo externo
+        - repoURL: https://kubernetes.github.io/ingress-nginx
+          chart: ingress-nginx
+          targetRevision: '4.10.1'
+          helm:
+            ## Usando nosso repo referenciando antes para o values
+            valueFiles:
+              - '$values/overlays/{{.project}}/nginx-controller/values.yaml'
+      destination:
+        server: '{{.url}}'
+        namespace: '{{.namespace}}'
+      # Para não syncar automatica os recursos
+      # syncPolicy:
+      #   automated:
+      #     prune: true
+      #     selfHeal: true
+      #   syncOptions:
+      #     - CreateNamespace=true

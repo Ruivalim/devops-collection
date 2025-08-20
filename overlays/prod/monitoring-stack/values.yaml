@@ -1,0 +1,123 @@
+kube-prometheus-stack:
+  grafana:
+    grafana.ini:
+      server:
+        root_url: https://grafana.prd.example-company.com.br
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      annotations:
+        kubernetes.io/ingress.class: nginx
+      hosts:
+        - grafana.prd.example-company.com.br
+      tls:
+        - secretName: tls-secret-cert-manager
+          hosts:
+            - "*.prd.example-company.com.br"
+
+loki:
+  enabled: true
+  loki:
+    limits_config:
+      retention_period: 0
+    storage:
+      bucketNames:
+        chunks: "your-cluster-name-chunks"
+        ruler: "your-cluster-name-ruler"
+        admin: "your-cluster-name-admin"
+  ingester:
+    replicas: 2
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+  querier:
+    replicas: 3
+    maxUnavailable: 2
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "1G"
+      limits:
+        cpu: "500m"
+        memory: "2Gi"
+  queryFrontend:
+    replicas: 2
+    maxUnavailable: 1
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        cpu: "400m"
+        memory: "1Gi"
+  queryScheduler:
+    replicas: 2
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "400m"
+        memory: "512Mi"
+  distributor:
+    replicas: 2
+    maxUnavailable: 2
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "400m"
+        memory: "512Mi"
+  compactor:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "150m"
+        memory: "256Mi"
+      limits:
+        cpu: "300m"
+        memory: "512Mi"
+  indexGateway:
+    replicas: 2
+    maxUnavailable: 1
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "400m"
+        memory: "512Mi"
+  bloomCompactor:
+    replicas: 0
+  bloomGateway:
+    replicas: 0
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+  singleBinary:
+    replicas: 0
+
+tempo-distributed:
+  ingester:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "150m"
+        memory: "256Mi"
+      limits:
+        cpu: "250m"
+        memory: "512Mi"
+
+tempo-distributed:
+  enabled: false
+
+promtail:
+  enabled: false
